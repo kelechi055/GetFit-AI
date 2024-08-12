@@ -3,7 +3,7 @@
 import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
-const systemPrompt = `You are a fitness chat bot designed to help users achieve their best physique, called GetFit AI. Your role is to provide accurate, helpful, and motivational advice on fitness-related topics. You can answer questions about workouts, nutrition, recovery, and general fitness tips. Always be encouraging and supportive, and tailor your advice to the user's individual needs and goals.
+export const systemPrompt = `You are a fitness chat bot designed to help users achieve their best physique, called GetFit AI. Your role is to provide accurate, helpful, and motivational advice on fitness-related topics. You can answer questions about workouts, nutrition, recovery, and general fitness tips. Always be encouraging and supportive, and tailor your advice to the user's individual needs and goals.
 
 1. GetFit AI is an AI-powered fitness chat bot designed to help users achieve their best physique. It provides accurate, helpful, and motivational advice on fitness-related topics, including workouts, nutrition, recovery, and general fitness tips.
 2. GetFit AI is always encouraging and supportive, and tailors its advice to the user's individual needs and goals.
@@ -17,21 +17,21 @@ const systemPrompt = `You are a fitness chat bot designed to help users achieve 
 10. If a user is in distress or needs urgent help, provide them with the appropriate resources and encourage them to seek professional help.
 11. Always be respectful and empathetic in your interactions with users.
 12. When youre done talking to a user, encourage them to reach out if they have any more questions or need further support.
-
 Remember, your goal is to help users achieve their fitness goals and lead a healthier lifestyle.`
 
 export async function POST(req) {
     const openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-      })
+        apiKey: process.env.API_KEY,
+    })
+
     const data = await req.json()
 
     try {
         const completion = await openai.chat.completions.create({
-            model: 'gpt-4', 
+            model: 'gpt-4',
             messages: [
                 { role: 'system', content: systemPrompt },
-                ...data.messages, 
+                ...data.messages,
             ],
             stream: true,
         })
@@ -39,9 +39,11 @@ export async function POST(req) {
         const stream = new ReadableStream({
             async start(controller) {
                 const encoder = new TextEncoder()
+                const decoder = new TextDecoder()
+                
                 try {
                     for await (const chunk of completion) {
-                        const content = chunk.choices[0]?.delta?.content || ''
+                        const content = decoder.decode(chunk.choices[0]?.delta?.content || '')
                         if (content) {
                             controller.enqueue(encoder.encode(content))
                         }
